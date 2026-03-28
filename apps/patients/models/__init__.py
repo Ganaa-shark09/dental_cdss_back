@@ -1,1 +1,3 @@
-from .patients import *
+from .patient import Patient
+
+__all__ = ["Patient"]
