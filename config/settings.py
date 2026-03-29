@@ -78,6 +78,9 @@ INSTALLED_APPS = [
     "apps.clinics",
     "apps.patients",
     "apps.appointments",
+    "apps.consultations",
+    "apps.odontology",
+    "apps.cdss",
 ]
 
 MIDDLEWARE = [
