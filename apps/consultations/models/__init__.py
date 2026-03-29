@@ -1,1 +1,3 @@
-from .consultations import *
+from .consultation import Consultation
+
+__all__ = ["Consultation"]

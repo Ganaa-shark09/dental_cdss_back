@@ -1,1 +1,3 @@
-from .consultations import *
+from .consultation import ConsultationListCreateAPIView, ConsultationDetailAPIView
+
+__all__ = ["ConsultationListCreateAPIView", "ConsultationDetailAPIView"]
