@@ -1,1 +1,3 @@
-from .audit_logs import *
+from .audit_log import AuditLogListAPIView
+
+__all__ = ["AuditLogListAPIView"]
