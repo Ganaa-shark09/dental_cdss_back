@@ -1,1 +1,3 @@
-from .treatment_plans import *
+from .treatment_plan import TreatmentPlanListCreateAPIView, TreatmentPlanDetailAPIView
+
+__all__ = ["TreatmentPlanListCreateAPIView", "TreatmentPlanDetailAPIView"]

@@ -2,7 +2,7 @@ from rest_framework.exceptions import ValidationError
 from apps.reports.models import Report
 from apps.consultations.models import Consultation
 from apps.prescriptions.models import Prescription
-# from apps.treatment_plans.models import TreatmentPlan
+from apps.treatment_plans.models import TreatmentPlan
 from apps.documents.models import Document
 
 
@@ -27,16 +27,16 @@ class ReportService:
                 {"prescription_id": ["Valid prescription not found."]}
             )
 
-    # @staticmethod
-    # def get_treatment_plan(treatment_plan_id):
-    #     if not treatment_plan_id:
-    #         return None
-    #     try:
-    #         return TreatmentPlan.objects.get(id=treatment_plan_id)
-    #     except TreatmentPlan.DoesNotExist:
-    #         raise ValidationError(
-    #             {"treatment_plan_id": ["Valid treatment plan not found."]}
-    #         )
+    @staticmethod
+    def get_treatment_plan(treatment_plan_id):
+        if not treatment_plan_id:
+            return None
+        try:
+            return TreatmentPlan.objects.get(id=treatment_plan_id)
+        except TreatmentPlan.DoesNotExist:
+            raise ValidationError(
+                {"treatment_plan_id": ["Valid treatment plan not found."]}
+            )
 
     @staticmethod
     def get_documents(document_ids):

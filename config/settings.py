@@ -83,7 +83,8 @@ INSTALLED_APPS = [
     "apps.cdss",
     "apps.prescriptions",
     "apps.documents",
-    "apps.reports"
+    "apps.reports",
+    "apps.treatment_plans"
 ]
 
 MIDDLEWARE = [

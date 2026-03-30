@@ -1,7 +1,7 @@
 from django.db import models
 from apps.consultations.models import Consultation
 from apps.prescriptions.models import Prescription
-# from apps.treatment_plans.models import TreatmentPlan
+from apps.treatment_plans.models import TreatmentPlan
 from apps.documents.models import Document
 from apps.common.models import BaseModel
 import uuid
@@ -21,13 +21,13 @@ class Report(BaseModel):
         blank=True,
         related_name="reports",
     )
-    # treatment_plan_summary = models.ForeignKey(
-    #     "treatment_plans.TreatmentPlan",
-    #     on_delete=models.SET_NULL,
-    #     null=True,
-    #     blank=True,
-    #     related_name="reports",
-    # )
+    treatment_plan_summary = models.ForeignKey(
+        "treatment_plans.TreatmentPlan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reports",
+    )
     documents = models.ManyToManyField(
         "documents.Document", related_name="reports", blank=True
     )
