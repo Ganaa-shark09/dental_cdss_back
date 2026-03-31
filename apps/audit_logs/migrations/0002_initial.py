@@ -10,18 +10,16 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("staff", "0001_initial"),
+        ("audit_logs", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name="staffprofile",
+            model_name="auditlog",
             name="user",
-            field=models.OneToOneField(
-                on_delete=django.db.models.deletion.CASCADE,
-                related_name="staff_profile",
-                to=settings.AUTH_USER_MODEL,
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL
             ),
         ),
     ]

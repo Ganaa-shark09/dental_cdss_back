@@ -6,9 +6,11 @@ from apps.users.models import User, Role
 
 class UserService:
     @staticmethod
-    def validate_email_uniqueness(email: str):
-        if User.objects.filter(email__iexact=email).exists():
-            raise ValidationError({"email": ["A user with this email already exists."]})
+    def validate_username_uniqueness(username: str):
+        if User.objects.filter(username__iexact=username).exists():
+            raise ValidationError(
+                {"username": ["A user with this username already exists."]}
+            )
 
     @staticmethod
     def get_role_by_id(role_id):
@@ -23,16 +25,19 @@ class UserService:
     @classmethod
     @transaction.atomic
     def create_user(cls, validated_data):
-        email = validated_data["email"].strip().lower()
-        cls.validate_email_uniqueness(email)
+        username = validated_data["username"].strip()
+        cls.validate_username_uniqueness(username)
 
         role = cls.get_role_by_id(validated_data.get("role_id"))
 
         user = User.objects.create_user(
-            email=email,
+            username=username,
             password=validated_data["password"],
             first_name=validated_data["first_name"],
             last_name=validated_data.get("last_name", ""),
+            email=validated_data.get(
+                "email", ""
+            ),
             phone_number=validated_data.get("phone_number", ""),
             role=role,
             is_active=validated_data.get("is_active", True),

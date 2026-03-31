@@ -10,12 +10,12 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("clinics", "0001_initial"),
+        ("consultations", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="StaffProfile",
+            name="Document",
             fields=[
                 ("id", models.BigAutoField(primary_key=True, serialize=False)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -24,30 +24,22 @@ class Migration(migrations.Migration):
                     "uuid",
                     models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
                 ),
-                ("employee_id", models.CharField(max_length=50, unique=True)),
-                ("designation", models.CharField(max_length=100)),
-                (
-                    "specialization",
-                    models.CharField(blank=True, max_length=150, null=True),
-                ),
-                (
-                    "license_number",
-                    models.CharField(blank=True, max_length=100, null=True),
-                ),
-                ("years_of_experience", models.PositiveIntegerField(default=0)),
+                ("document_type", models.CharField(max_length=255)),
+                ("document", models.FileField(upload_to="documents/")),
+                ("description", models.TextField(blank=True, null=True)),
                 ("is_active", models.BooleanField(default=True)),
                 (
-                    "clinic",
+                    "consultation",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="staff_profiles",
-                        to="clinics.clinic",
+                        related_name="documents",
+                        to="consultations.consultation",
                     ),
                 ),
             ],
             options={
-                "db_table": "staff_profiles",
-                "ordering": ["designation", "employee_id"],
+                "db_table": "documents",
+                "ordering": ["-created_at"],
             },
         ),
     ]

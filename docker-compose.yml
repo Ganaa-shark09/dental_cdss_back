@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:16
-    container_name: dental_cdss_postgres
+    container_name: dental-cdss
     restart: unless-stopped
     env_file:
       - .env
@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5433:5432"
+      - "5432:5432"
     volumes:
       - dental_cdss_postgres_data:/var/lib/postgresql/data
     healthcheck:
