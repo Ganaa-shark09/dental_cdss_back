@@ -16,7 +16,7 @@ class LoginAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         data = AuthService.login_user(
-            email=serializer.validated_data["email"],
+            username=serializer.validated_data["username"],
             password=serializer.validated_data["password"],
         )
         return Response(data, status=status.HTTP_200_OK)
