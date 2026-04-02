@@ -4,7 +4,7 @@
 
 3) consultation is also initially completed, need proper implementation in it.
 
-
+4) fix: staff creation - while selecting the user the users are already has their roles and while creating the user we are assigning the role -- 
 
 
 
