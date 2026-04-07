@@ -1,5 +1,6 @@
-from datetime import datetime, date
+from datetime import date
 
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from apps.appointments.models import Appointment
@@ -9,28 +10,31 @@ from apps.staff.models import StaffProfile
 
 
 class AppointmentService:
+    APPOINTMENT_NUMBER_PREFIX = "APT"
+    APPOINTMENT_NUMBER_PADDING = 5
+
     @staticmethod
-    def get_patient(patient_id):
+    def get_patient(patient_uuid):
         try:
-            return Patient.objects.get(id=patient_id, is_active=True)
+            return Patient.objects.get(uuid=patient_uuid, is_active=True)
         except Patient.DoesNotExist:
             raise ValidationError({"patient_id": ["Valid active patient not found."]})
 
     @staticmethod
-    def get_clinic(clinic_id):
+    def get_clinic(clinic_uuid):
         try:
-            return Clinic.objects.get(id=clinic_id, is_active=True)
+            return Clinic.objects.get(uuid=clinic_uuid, is_active=True)
         except Clinic.DoesNotExist:
             raise ValidationError({"clinic_id": ["Valid active clinic not found."]})
 
     @staticmethod
-    def get_staff_profile(staff_profile_id):
-        if not staff_profile_id:
+    def get_staff_profile(staff_profile_uuid):
+        if not staff_profile_uuid:
             return None
 
         try:
             return StaffProfile.objects.select_related("clinic").get(
-                id=staff_profile_id,
+                uuid=staff_profile_uuid,
                 is_active=True,
             )
         except StaffProfile.DoesNotExist:
@@ -38,18 +42,12 @@ class AppointmentService:
                 {"staff_profile_id": ["Valid active staff profile not found."]}
             )
 
-    @staticmethod
-    def validate_appointment_number_uniqueness(appointment_number: str):
-        if Appointment.objects.filter(
-            appointment_number__iexact=appointment_number
-        ).exists():
-            raise ValidationError(
-                {
-                    "appointment_number": [
-                        "An appointment with this number already exists."
-                    ]
-                }
-            )
+    @classmethod
+    def build_appointment_number(cls, appointment_id: int) -> str:
+        return (
+            f"{cls.APPOINTMENT_NUMBER_PREFIX}"
+            f"{str(appointment_id).zfill(cls.APPOINTMENT_NUMBER_PADDING)}"
+        )
 
     @staticmethod
     def validate_appointment_date(appointment_date):
@@ -86,16 +84,15 @@ class AppointmentService:
             )
 
     @classmethod
+    @transaction.atomic
     def create_appointment(cls, validated_data):
         patient = cls.get_patient(validated_data["patient_id"])
         clinic = cls.get_clinic(validated_data["clinic_id"])
         staff_profile = cls.get_staff_profile(validated_data.get("staff_profile_id"))
 
-        appointment_number = validated_data["appointment_number"].strip().upper()
         appointment_date = validated_data["appointment_date"]
         appointment_time = validated_data["appointment_time"]
 
-        cls.validate_appointment_number_uniqueness(appointment_number)
         cls.validate_appointment_date(appointment_date)
         cls.validate_staff_clinic_match(staff_profile, clinic)
         cls.validate_duplicate_slot(patient, appointment_date, appointment_time)
@@ -104,7 +101,7 @@ class AppointmentService:
             patient=patient,
             clinic=clinic,
             staff_profile=staff_profile,
-            appointment_number=appointment_number,
+            appointment_number="TEMP",
             appointment_date=appointment_date,
             appointment_time=appointment_time,
             status=validated_data.get("status", Appointment.STATUS_SCHEDULED),
@@ -112,6 +109,10 @@ class AppointmentService:
             notes=validated_data.get("notes", "").strip() or None,
             is_active=validated_data.get("is_active", True),
         )
+
+        appointment.appointment_number = cls.build_appointment_number(appointment.id)
+        appointment.save(update_fields=["appointment_number"])
+
         return appointment
 
     @staticmethod
@@ -128,13 +129,13 @@ class AppointmentService:
         )
 
     @staticmethod
-    def get_appointment_by_id(appointment_id):
+    def get_appointment_by_id(appointment_uuid):
         try:
             return Appointment.objects.select_related(
                 "patient",
                 "clinic",
                 "staff_profile",
                 "staff_profile__user",
-            ).get(id=appointment_id)
+            ).get(uuid=appointment_uuid)
         except Appointment.DoesNotExist:
             raise ValidationError({"appointment_id": ["Appointment not found."]})
