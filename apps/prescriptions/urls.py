@@ -7,7 +7,7 @@ from apps.prescriptions.views.prescription import (
 urlpatterns = [
     path("", PrescriptionListCreateAPIView.as_view(), name="prescription-list-create"),
     path(
-        "<uuid:prescription_id>/",
+        "<uuid:prescription_uuid>/",
         PrescriptionDetailAPIView.as_view(),
         name="prescription-detail",
     ),
