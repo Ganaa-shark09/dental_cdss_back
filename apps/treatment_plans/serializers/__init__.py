@@ -1,3 +1,11 @@
-from .treatment_plan import TreatmentPlanSerializer, TreatmentPlanCreateSerializer
+from .treatment_plan import (
+    TreatmentPlanSerializer,
+    TreatmentPlanCreateSerializer,
+    TreatmentPlanUpdateSerializer,
+)
 
-__all__ = ["TreatmentPlanSerializer", "TreatmentPlanCreateSerializer"]
+__all__ = [
+    "TreatmentPlanSerializer",
+    "TreatmentPlanCreateSerializer",
+    "TreatmentPlanUpdateSerializer",
+]

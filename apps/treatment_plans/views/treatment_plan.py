@@ -1,9 +1,11 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
 from apps.treatment_plans.serializers import (
     TreatmentPlanSerializer,
     TreatmentPlanCreateSerializer,
+    TreatmentPlanUpdateSerializer,
 )
 from apps.treatment_plans.services import TreatmentPlanService
 
@@ -26,9 +28,29 @@ class TreatmentPlanListCreateAPIView(APIView):
 
 
 class TreatmentPlanDetailAPIView(APIView):
-    def get(self, request, treatment_plan_id, *args, **kwargs):
-        treatment_plan = TreatmentPlanService.get_treatment_plan_by_id(
-            treatment_plan_id
+    def get(self, request, treatment_plan_uuid, *args, **kwargs):
+        treatment_plan = TreatmentPlanService.get_treatment_plan_by_uuid(
+            treatment_plan_uuid
         )
         serializer = TreatmentPlanSerializer(treatment_plan)
         return Response(serializer.data)
+
+    def put(self, request, treatment_plan_uuid, *args, **kwargs):
+        serializer = TreatmentPlanUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        treatment_plan = TreatmentPlanService.update_treatment_plan(
+            treatment_plan_uuid, serializer.validated_data
+        )
+        response_serializer = TreatmentPlanSerializer(treatment_plan)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, treatment_plan_uuid, *args, **kwargs):
+        serializer = TreatmentPlanUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        treatment_plan = TreatmentPlanService.update_treatment_plan(
+            treatment_plan_uuid, serializer.validated_data
+        )
+        response_serializer = TreatmentPlanSerializer(treatment_plan)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
