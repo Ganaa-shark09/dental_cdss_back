@@ -1,3 +1,3 @@
-from .report import ReportSerializer, ReportCreateSerializer
+from .report import ReportSerializer, ReportCreateSerializer, ReportUpdateSerializer
 
-__all__ = ["ReportSerializer", "ReportCreateSerializer"]
+__all__ = ["ReportSerializer", "ReportCreateSerializer", "ReportUpdateSerializer"]
