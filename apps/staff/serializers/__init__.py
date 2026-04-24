@@ -1,3 +1,11 @@
-from .staff_profile import StaffProfileSerializer, StaffProfileCreateSerializer
+from .staff_profile import (
+    StaffProfileSerializer,
+    StaffProfileCreateSerializer,
+    StaffProfileUpdateSerializer,
+)
 
-__all__ = ["StaffProfileSerializer", "StaffProfileCreateSerializer"]
+__all__ = [
+    "StaffProfileSerializer",
+    "StaffProfileCreateSerializer",
+    "StaffProfileUpdateSerializer",
+]

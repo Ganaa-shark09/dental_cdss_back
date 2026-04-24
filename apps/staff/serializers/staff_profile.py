@@ -1,7 +1,8 @@
 from rest_framework import serializers
-from apps.clinics.models.clinic import Clinic
+
+from apps.clinics.models import Clinic
 from apps.staff.models import StaffProfile
-from apps.users.models.user import User
+from apps.users.models import User
 
 
 class StaffProfileSerializer(serializers.ModelSerializer):
@@ -30,13 +31,14 @@ class StaffProfileSerializer(serializers.ModelSerializer):
 
 
 class StaffProfileCreateSerializer(serializers.Serializer):
-    user = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(is_active=True)
+    user = serializers.SlugRelatedField(
+        slug_field="uuid",
+        queryset=User.objects.filter(is_active=True),
     )
-    clinic = serializers.PrimaryKeyRelatedField(
-        queryset=Clinic.objects.filter(is_active=True)
+    clinic = serializers.SlugRelatedField(
+        slug_field="uuid",
+        queryset=Clinic.objects.filter(is_active=True),
     )
-    employee_id = serializers.CharField(max_length=50)
     designation = serializers.CharField(max_length=100)
     specialization = serializers.CharField(
         max_length=150, required=False, allow_blank=True
@@ -48,3 +50,20 @@ class StaffProfileCreateSerializer(serializers.Serializer):
         required=False, default=0, min_value=0
     )
     is_active = serializers.BooleanField(required=False, default=True)
+
+
+class StaffProfileUpdateSerializer(serializers.Serializer):
+    clinic = serializers.SlugRelatedField(
+        slug_field="uuid",
+        queryset=Clinic.objects.filter(is_active=True),
+        required=False,
+    )
+    designation = serializers.CharField(max_length=100, required=False)
+    specialization = serializers.CharField(
+        max_length=150, required=False, allow_blank=True
+    )
+    license_number = serializers.CharField(
+        max_length=100, required=False, allow_blank=True
+    )
+    years_of_experience = serializers.IntegerField(required=False, min_value=0)
+    is_active = serializers.BooleanField(required=False)
