@@ -36,7 +36,6 @@ class AppointmentCreateSerializer(serializers.Serializer):
     patient_id = serializers.UUIDField()
     clinic_id = serializers.UUIDField()
     staff_profile_id = serializers.UUIDField(required=False, allow_null=True)
-    appointment_number = serializers.CharField(max_length=50)
     appointment_date = serializers.DateField()
     appointment_time = serializers.TimeField()
     status = serializers.ChoiceField(
