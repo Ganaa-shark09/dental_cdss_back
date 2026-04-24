@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.patients.serializers import PatientSerializer, PatientCreateSerializer
+from apps.patients.serializers.patient import PatientUpdateSerializer
 from apps.patients.services import PatientService
 
 
@@ -22,7 +23,15 @@ class PatientListCreateAPIView(APIView):
 
 
 class PatientDetailAPIView(APIView):
-    def get(self, request, patient_id, *args, **kwargs):
-        patient = PatientService.get_patient_by_id(patient_id)
+    def get(self, request, patient_uuid, *args, **kwargs):
+        patient = PatientService.get_patient_by_uuid(patient_uuid)
         serializer = PatientSerializer(patient)
         return Response(serializer.data)
+
+    def put(self, request, patient_uuid, *args, **kwargs):
+        serializer = PatientUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        patient = PatientService.update_patient(patient_uuid, serializer.validated_data)
+        response_serializer = PatientSerializer(patient)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)

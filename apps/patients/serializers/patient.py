@@ -34,7 +34,7 @@ class PatientSerializer(serializers.ModelSerializer):
 
 
 class PatientCreateSerializer(serializers.Serializer):
-    patient_code = serializers.CharField(max_length=50)
+    # patient_code = serializers.CharField(max_length=50)
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     gender = serializers.ChoiceField(choices=["MALE", "FEMALE", "OTHER"])
@@ -65,3 +65,36 @@ class PatientCreateSerializer(serializers.Serializer):
     )
 
     is_active = serializers.BooleanField(required=False, default=True)
+
+
+class PatientUpdateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    gender = serializers.ChoiceField(choices=["MALE", "FEMALE", "OTHER"])
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
+
+    phone_number = serializers.CharField(
+        max_length=20, required=False, allow_blank=True
+    )
+    email = serializers.EmailField(required=False, allow_blank=True, allow_null=True)
+
+    address = serializers.CharField(required=False, allow_blank=True)
+    city = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    state = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    country = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    postal_code = serializers.CharField(max_length=20, required=False, allow_blank=True)
+
+    blood_group = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    marital_status = serializers.CharField(
+        max_length=50, required=False, allow_blank=True
+    )
+    occupation = serializers.CharField(max_length=150, required=False, allow_blank=True)
+
+    emergency_contact_name = serializers.CharField(
+        max_length=150, required=False, allow_blank=True
+    )
+    emergency_contact_phone = serializers.CharField(
+        max_length=20, required=False, allow_blank=True
+    )
+
+    is_active = serializers.BooleanField(required=False)
