@@ -5,6 +5,7 @@ from apps.odontology.serializers.tooth_record import ToothRecordSerializer
 
 
 class DentalChartSerializer(serializers.ModelSerializer):
+    consultation = serializers.UUIDField(source="consultation.uuid", read_only=True)
     consultation_number = serializers.CharField(
         source="consultation.consultation_number",
         read_only=True,
@@ -14,7 +15,7 @@ class DentalChartSerializer(serializers.ModelSerializer):
     class Meta:
         model = DentalChart
         fields = (
-            "id",
+            "uuid",
             "consultation",
             "consultation_number",
             "notes",
@@ -29,3 +30,8 @@ class DentalChartCreateSerializer(serializers.Serializer):
     consultation_id = serializers.UUIDField()
     notes = serializers.CharField(required=False, allow_blank=True)
     is_active = serializers.BooleanField(required=False, default=True)
+
+
+class DentalChartUpdateSerializer(serializers.Serializer):
+    notes = serializers.CharField(required=False, allow_blank=True)
+    is_active = serializers.BooleanField(required=False)

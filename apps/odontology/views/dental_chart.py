@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from apps.odontology.serializers import (
     DentalChartSerializer,
     DentalChartCreateSerializer,
+    DentalChartUpdateSerializer,
 )
 from apps.odontology.services import OdontologyService
 
@@ -25,7 +26,23 @@ class DentalChartListCreateAPIView(APIView):
 
 
 class DentalChartDetailAPIView(APIView):
-    def get(self, request, chart_id, *args, **kwargs):
-        chart = OdontologyService.get_chart_by_id(chart_id)
+    def get(self, request, chart_uuid, *args, **kwargs):
+        chart = OdontologyService.get_chart_by_uuid(chart_uuid)
         serializer = DentalChartSerializer(chart)
         return Response(serializer.data)
+
+    def put(self, request, chart_uuid, *args, **kwargs):
+        serializer = DentalChartUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        chart = OdontologyService.update_chart(chart_uuid, serializer.validated_data)
+        response_serializer = DentalChartSerializer(chart)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, chart_uuid, *args, **kwargs):
+        serializer = DentalChartUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        chart = OdontologyService.update_chart(chart_uuid, serializer.validated_data)
+        response_serializer = DentalChartSerializer(chart)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
