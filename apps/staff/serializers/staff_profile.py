@@ -9,12 +9,14 @@ class StaffProfileSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source="user.full_name", read_only=True)
     user_email = serializers.CharField(source="user.email", read_only=True)
     clinic_name = serializers.CharField(source="clinic.name", read_only=True)
+    role = serializers.CharField(source="user.role", read_only=True)
 
     class Meta:
         model = StaffProfile
         fields = (
             "uuid",
             "user",
+            "role",
             "user_name",
             "user_email",
             "clinic",
