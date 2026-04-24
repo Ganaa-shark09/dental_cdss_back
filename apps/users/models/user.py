@@ -8,6 +8,7 @@ import uuid
 
 class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    username = models.CharField(max_length=150, unique=True)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150, blank=True, null=True)
     email = models.EmailField(unique=True)
@@ -26,15 +27,15 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
 
     objects = UserManager()
 
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name"]
+    USERNAME_FIELD = "username"
+    REQUIRED_FIELDS = ["email"]
 
     class Meta:
         db_table = "users"
         ordering = ["-created_at"]
 
     def __str__(self):
-        return self.email
+        return self.username
 
     @property
     def full_name(self):

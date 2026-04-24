@@ -10,10 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 import environ
 from datetime import timedelta
 
+import environ
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,6 +31,9 @@ SECRET_KEY = env(
     default="django-insecure-7&#v=2j=(#hrsk)$234qn)xr10qebrs54kdxdm3ba730u-1km3",
 )
 
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgress")
+DB_HOST = os.getenv("DB_HOST", "dental-cdss-db")
+DB_PORT = os.getenv("DB_PORT", "5432")
 DEBUG = env.bool("DEBUG", default=True)
 
 ALLOWED_HOSTS = env.list(
@@ -167,7 +172,7 @@ DATABASES = {
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
         "HOST": env("POSTGRES_HOST", default="127.0.0.1"),
-        "PORT": env("POSTGRES_PORT", default="5433"),
+        "PORT": env("POSTGRES_PORT", default="5432"),
     }
 }
 

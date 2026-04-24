@@ -10,13 +10,14 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ("appointments", "0001_initial"),
         ("clinics", "0001_initial"),
         ("patients", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="Appointment",
+            name="Consultation",
             fields=[
                 ("id", models.BigAutoField(primary_key=True, serialize=False)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -25,32 +26,46 @@ class Migration(migrations.Migration):
                     "uuid",
                     models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
                 ),
-                ("appointment_number", models.CharField(max_length=50, unique=True)),
-                ("appointment_date", models.DateField()),
-                ("appointment_time", models.TimeField()),
+                ("consultation_number", models.CharField(max_length=50, unique=True)),
+                ("consultation_date", models.DateField()),
+                ("consultation_time", models.TimeField()),
+                ("chief_complaint", models.TextField(blank=True, null=True)),
+                ("history_of_present_illness", models.TextField(blank=True, null=True)),
+                ("medical_history_summary", models.TextField(blank=True, null=True)),
+                ("dental_history_summary", models.TextField(blank=True, null=True)),
+                ("examination_summary", models.TextField(blank=True, null=True)),
+                ("provisional_diagnosis", models.TextField(blank=True, null=True)),
+                ("final_diagnosis", models.TextField(blank=True, null=True)),
+                ("notes", models.TextField(blank=True, null=True)),
                 (
                     "status",
                     models.CharField(
                         choices=[
-                            ("SCHEDULED", "Scheduled"),
-                            ("CONFIRMED", "Confirmed"),
+                            ("DRAFT", "Draft"),
                             ("IN_PROGRESS", "In Progress"),
                             ("COMPLETED", "Completed"),
                             ("CANCELLED", "Cancelled"),
-                            ("NO_SHOW", "No Show"),
                         ],
-                        default="SCHEDULED",
+                        default="DRAFT",
                         max_length=20,
                     ),
                 ),
-                ("reason_for_visit", models.TextField(blank=True, null=True)),
-                ("notes", models.TextField(blank=True, null=True)),
                 ("is_active", models.BooleanField(default=True)),
+                (
+                    "appointment",
+                    models.OneToOneField(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="consultation",
+                        to="appointments.appointment",
+                    ),
+                ),
                 (
                     "clinic",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="appointments",
+                        related_name="consultations",
                         to="clinics.clinic",
                     ),
                 ),
@@ -58,14 +73,14 @@ class Migration(migrations.Migration):
                     "patient",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="appointments",
+                        related_name="consultations",
                         to="patients.patient",
                     ),
                 ),
             ],
             options={
-                "db_table": "appointments",
-                "ordering": ["-appointment_date", "-appointment_time"],
+                "db_table": "consultations",
+                "ordering": ["-consultation_date", "-consultation_time"],
             },
         ),
     ]

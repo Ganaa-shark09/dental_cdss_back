@@ -10,13 +10,13 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("clinics", "0001_initial"),
+        ("consultations", "0001_initial"),
         ("patients", "0001_initial"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name="Appointment",
+            name="Prescription",
             fields=[
                 ("id", models.BigAutoField(primary_key=True, serialize=False)),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
@@ -25,47 +25,33 @@ class Migration(migrations.Migration):
                     "uuid",
                     models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
                 ),
-                ("appointment_number", models.CharField(max_length=50, unique=True)),
-                ("appointment_date", models.DateField()),
-                ("appointment_time", models.TimeField()),
-                (
-                    "status",
-                    models.CharField(
-                        choices=[
-                            ("SCHEDULED", "Scheduled"),
-                            ("CONFIRMED", "Confirmed"),
-                            ("IN_PROGRESS", "In Progress"),
-                            ("COMPLETED", "Completed"),
-                            ("CANCELLED", "Cancelled"),
-                            ("NO_SHOW", "No Show"),
-                        ],
-                        default="SCHEDULED",
-                        max_length=20,
-                    ),
-                ),
-                ("reason_for_visit", models.TextField(blank=True, null=True)),
+                ("medication", models.CharField(max_length=255)),
+                ("dosage", models.CharField(max_length=255)),
+                ("treatment_instructions", models.TextField()),
                 ("notes", models.TextField(blank=True, null=True)),
+                ("date_issued", models.DateField()),
+                ("expiry_date", models.DateField(blank=True, null=True)),
                 ("is_active", models.BooleanField(default=True)),
                 (
-                    "clinic",
+                    "consultation",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="appointments",
-                        to="clinics.clinic",
+                        related_name="prescriptions",
+                        to="consultations.consultation",
                     ),
                 ),
                 (
                     "patient",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="appointments",
+                        related_name="prescriptions",
                         to="patients.patient",
                     ),
                 ),
             ],
             options={
-                "db_table": "appointments",
-                "ordering": ["-appointment_date", "-appointment_time"],
+                "db_table": "prescriptions",
+                "ordering": ["-date_issued"],
             },
         ),
     ]
