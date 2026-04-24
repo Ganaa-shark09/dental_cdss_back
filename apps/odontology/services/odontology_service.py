@@ -17,9 +17,9 @@ class OdontologyService:
     }
 
     @staticmethod
-    def get_consultation(consultation_id):
+    def get_consultation(consultation_uuid):
         try:
-            return Consultation.objects.get(id=consultation_id, is_active=True)
+            return Consultation.objects.get(uuid=consultation_uuid, is_active=True)
         except Consultation.DoesNotExist:
             raise ValidationError(
                 {"consultation_id": ["Valid active consultation not found."]}
@@ -37,14 +37,15 @@ class OdontologyService:
             )
 
     @staticmethod
-    def get_chart(chart_id):
+    def get_chart(chart_uuid):
         try:
             return DentalChart.objects.select_related("consultation").get(
-                id=chart_id, is_active=True
+                uuid=chart_uuid,
+                is_active=True,
             )
         except DentalChart.DoesNotExist:
             raise ValidationError(
-                {"chart_id": ["Valid active dental chart not found."]}
+                {"chart_uuid": ["Valid active dental chart not found."]}
             )
 
     @staticmethod
@@ -67,10 +68,12 @@ class OdontologyService:
             )
 
     @staticmethod
-    def validate_tooth_record_uniqueness(chart, tooth_number: str):
-        if ToothRecord.objects.filter(
-            chart=chart, tooth_number__iexact=tooth_number
-        ).exists():
+    def validate_tooth_record_uniqueness(chart, tooth_number: str, exclude_uuid=None):
+        qs = ToothRecord.objects.filter(chart=chart, tooth_number__iexact=tooth_number)
+        if exclude_uuid:
+            qs = qs.exclude(uuid=exclude_uuid)
+
+        if qs.exists():
             raise ValidationError(
                 {
                     "tooth_number": [
@@ -95,24 +98,50 @@ class OdontologyService:
     def list_charts():
         return (
             DentalChart.objects.select_related("consultation")
+            .prefetch_related("tooth_records")
             .all()
             .order_by("-created_at")
         )
 
     @staticmethod
-    def get_chart_by_id(chart_id):
+    def get_chart_by_uuid(chart_uuid):
         try:
             return (
                 DentalChart.objects.select_related("consultation")
                 .prefetch_related("tooth_records")
-                .get(id=chart_id)
+                .get(uuid=chart_uuid)
             )
         except DentalChart.DoesNotExist:
-            raise ValidationError({"chart_id": ["Dental chart not found."]})
+            raise ValidationError({"chart_uuid": ["Dental chart not found."]})
 
     @classmethod
-    def create_tooth_record(cls, chart_id, validated_data):
-        chart = cls.get_chart(chart_id)
+    def update_chart(cls, chart_uuid, validated_data):
+        chart = cls.get_chart_by_uuid(chart_uuid)
+
+        if "notes" in validated_data:
+            chart.notes = validated_data.get("notes", "").strip() or None
+
+        if "is_active" in validated_data:
+            chart.is_active = validated_data["is_active"]
+
+        chart.save()
+        return chart
+
+    @staticmethod
+    def get_tooth_record(chart_uuid, tooth_record_uuid):
+        try:
+            return ToothRecord.objects.select_related(
+                "chart", "chart__consultation"
+            ).get(
+                uuid=tooth_record_uuid,
+                chart__uuid=chart_uuid,
+            )
+        except ToothRecord.DoesNotExist:
+            raise ValidationError({"tooth_record_uuid": ["Tooth record not found."]})
+
+    @classmethod
+    def create_tooth_record(cls, chart_uuid, validated_data):
+        chart = cls.get_chart(chart_uuid)
 
         tooth_number = validated_data["tooth_number"].strip().upper()
         surfaces = [
@@ -141,6 +170,46 @@ class OdontologyService:
         return tooth_record
 
     @staticmethod
-    def list_tooth_records(chart_id):
-        chart = OdontologyService.get_chart(chart_id)
+    def list_tooth_records(chart_uuid):
+        chart = OdontologyService.get_chart(chart_uuid)
         return chart.tooth_records.filter(is_active=True).order_by("tooth_number")
+
+    @classmethod
+    def update_tooth_record(cls, chart_uuid, tooth_record_uuid, validated_data):
+        tooth_record = cls.get_tooth_record(chart_uuid, tooth_record_uuid)
+
+        if "surfaces" in validated_data:
+            surfaces = [
+                surface.strip().upper()
+                for surface in validated_data.get("surfaces", [])
+            ]
+            cls.validate_surfaces(surfaces)
+            tooth_record.surfaces = surfaces
+
+        if "condition" in validated_data:
+            tooth_record.condition = validated_data["condition"]
+
+        if "mobility_grade" in validated_data:
+            tooth_record.mobility_grade = (
+                validated_data.get("mobility_grade", "").strip() or None
+            )
+
+        if "percussion_tenderness" in validated_data:
+            tooth_record.percussion_tenderness = validated_data["percussion_tenderness"]
+
+        if "palpation_tenderness" in validated_data:
+            tooth_record.palpation_tenderness = validated_data["palpation_tenderness"]
+
+        if "probing_depth_summary" in validated_data:
+            tooth_record.probing_depth_summary = (
+                validated_data.get("probing_depth_summary", "").strip() or None
+            )
+
+        if "notes" in validated_data:
+            tooth_record.notes = validated_data.get("notes", "").strip() or None
+
+        if "is_active" in validated_data:
+            tooth_record.is_active = validated_data["is_active"]
+
+        tooth_record.save()
+        return tooth_record
