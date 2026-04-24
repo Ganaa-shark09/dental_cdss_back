@@ -1,17 +1,23 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+import uuid
 
 from apps.common.models import BaseModel
-from django.contrib.auth import get_user_model
 
 
 class AuditLog(BaseModel):
-    model_name = models.CharField(max_length=255)
-    record_id = models.UUIDField()
-    field_name = models.CharField(max_length=255)
-    old_value = models.TextField()
-    new_value = models.TextField()
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    model_name = models.CharField(max_length=255, db_index=True)
+    record_id = models.UUIDField(db_index=True)
+    field_name = models.CharField(max_length=255, db_index=True)
+    old_value = models.TextField(blank=True, null=True)
+    new_value = models.TextField(blank=True, null=True)
+    user = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.CASCADE,
+        related_name="audit_logs",
+    )
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
         db_table = "audit_logs"
