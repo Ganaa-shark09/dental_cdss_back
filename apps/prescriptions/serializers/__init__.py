@@ -1,3 +1,11 @@
-from .prescription import PrescriptionSerializer, PrescriptionCreateSerializer
+from .prescription import (
+    PrescriptionSerializer,
+    PrescriptionCreateSerializer,
+    PrescriptionUpdateSerializer,
+)
 
-__all__ = ["PrescriptionSerializer", "PrescriptionCreateSerializer"]
+__all__ = [
+    "PrescriptionSerializer",
+    "PrescriptionCreateSerializer",
+    "PrescriptionUpdateSerializer",
+]
