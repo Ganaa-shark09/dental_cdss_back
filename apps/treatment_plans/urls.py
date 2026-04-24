@@ -9,7 +9,7 @@ urlpatterns = [
         "", TreatmentPlanListCreateAPIView.as_view(), name="treatment-plan-list-create"
     ),
     path(
-        "<uuid:treatment_plan_id>/",
+        "<uuid:treatment_plan_uuid>/",
         TreatmentPlanDetailAPIView.as_view(),
         name="treatment-plan-detail",
     ),

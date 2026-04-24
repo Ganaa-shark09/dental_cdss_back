@@ -1,3 +1,7 @@
-from .document import DocumentSerializer, DocumentCreateSerializer
+from .document import (
+    DocumentSerializer,
+    DocumentCreateSerializer,
+    DocumentUpdateSerializer,
+)
 
-__all__ = ["DocumentSerializer", "DocumentCreateSerializer"]
+__all__ = ["DocumentSerializer", "DocumentCreateSerializer", "DocumentUpdateSerializer"]
