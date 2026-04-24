@@ -1,3 +1,3 @@
-from .clinic import ClinicListCreateAPIView
+from .clinic import ClinicListCreateAPIView, ClinicDetailAPIView
 
-__all__ = ["ClinicListCreateAPIView"]
+__all__ = ["ClinicListCreateAPIView", "ClinicDetailAPIView"]

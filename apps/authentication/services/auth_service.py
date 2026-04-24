@@ -5,11 +5,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 class AuthService:
     @staticmethod
-    def login_user(email: str, password: str):
-        user = authenticate(email=email, password=password)
+    def login_user(username: str, password: str):
+        user = authenticate(username=username, password=password)
 
         if not user:
-            raise AuthenticationFailed("Invalid email or password.")
+            raise AuthenticationFailed("Invalid username or password.")
 
         if not user.is_active:
             raise AuthenticationFailed("This user account is inactive.")
@@ -21,6 +21,7 @@ class AuthService:
             "refresh": str(refresh),
             "user": {
                 "id": str(user.id),
+                "username": user.username,
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,

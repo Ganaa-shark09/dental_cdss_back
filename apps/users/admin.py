@@ -14,14 +14,36 @@ class RoleAdmin(admin.ModelAdmin):
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     ordering = ("-created_at",)
-    list_display = ("email", "first_name", "last_name", "role", "is_staff", "is_active")
-    search_fields = ("email", "first_name", "last_name", "phone_number")
+    list_display = (
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "role",
+        "is_staff",
+        "is_active",
+    )
+    search_fields = ("username", "email", "first_name", "last_name", "phone_number")
     list_filter = ("is_staff", "is_active", "is_superuser", "role")
 
     fieldsets = (
-        (None, {"fields": ("email", "password")}),
-        ("Personal Info", {"fields": ("first_name", "last_name", "phone_number", "role")}),
-        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+        (None, {"fields": ("username", "email", "password")}),
+        (
+            "Personal Info",
+            {"fields": ("first_name", "last_name", "phone_number", "role")},
+        ),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                )
+            },
+        ),
         ("Important Dates", {"fields": ("last_login",)}),
     )
 
@@ -31,6 +53,7 @@ class UserAdmin(BaseUserAdmin):
             {
                 "classes": ("wide",),
                 "fields": (
+                    "username",
                     "email",
                     "first_name",
                     "last_name",
