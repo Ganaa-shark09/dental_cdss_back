@@ -1,3 +1,11 @@
-from .consultation import ConsultationSerializer, ConsultationCreateSerializer
+from .consultation import (
+    ConsultationSerializer,
+    ConsultationCreateSerializer,
+    ConsultationUpdateSerializer,
+)
 
-__all__ = ["ConsultationSerializer", "ConsultationCreateSerializer"]
+__all__ = [
+    "ConsultationSerializer",
+    "ConsultationCreateSerializer",
+    "ConsultationUpdateSerializer",
+]

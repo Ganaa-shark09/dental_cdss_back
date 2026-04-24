@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from apps.appointments.models import Appointment
@@ -10,9 +11,12 @@ from apps.staff.models import StaffProfile
 
 
 class ConsultationService:
+    CONSULTATION_NUMBER_PREFIX = "CON"
+    CONSULTATION_NUMBER_PADDING = 5
+
     @staticmethod
-    def get_appointment(appointment_id):
-        if not appointment_id:
+    def get_appointment(appointment_uuid):
+        if not appointment_uuid:
             return None
 
         try:
@@ -20,34 +24,34 @@ class ConsultationService:
                 "patient",
                 "clinic",
                 "staff_profile",
-            ).get(id=appointment_id, is_active=True)
+            ).get(uuid=appointment_uuid, is_active=True)
         except Appointment.DoesNotExist:
             raise ValidationError(
                 {"appointment_id": ["Valid active appointment not found."]}
             )
 
     @staticmethod
-    def get_patient(patient_id):
+    def get_patient(patient_uuid):
         try:
-            return Patient.objects.get(id=patient_id, is_active=True)
+            return Patient.objects.get(uuid=patient_uuid, is_active=True)
         except Patient.DoesNotExist:
             raise ValidationError({"patient_id": ["Valid active patient not found."]})
 
     @staticmethod
-    def get_clinic(clinic_id):
+    def get_clinic(clinic_uuid):
         try:
-            return Clinic.objects.get(id=clinic_id, is_active=True)
+            return Clinic.objects.get(uuid=clinic_uuid, is_active=True)
         except Clinic.DoesNotExist:
             raise ValidationError({"clinic_id": ["Valid active clinic not found."]})
 
     @staticmethod
-    def get_staff_profile(staff_profile_id):
-        if not staff_profile_id:
+    def get_staff_profile(staff_profile_uuid):
+        if not staff_profile_uuid:
             return None
 
         try:
             return StaffProfile.objects.select_related("clinic").get(
-                id=staff_profile_id,
+                uuid=staff_profile_uuid,
                 is_active=True,
             )
         except StaffProfile.DoesNotExist:
@@ -55,18 +59,12 @@ class ConsultationService:
                 {"staff_profile_id": ["Valid active staff profile not found."]}
             )
 
-    @staticmethod
-    def validate_consultation_number_uniqueness(consultation_number: str):
-        if Consultation.objects.filter(
-            consultation_number__iexact=consultation_number
-        ).exists():
-            raise ValidationError(
-                {
-                    "consultation_number": [
-                        "A consultation with this number already exists."
-                    ]
-                }
-            )
+    @classmethod
+    def build_consultation_number(cls, consultation_id: int) -> str:
+        return (
+            f"{cls.CONSULTATION_NUMBER_PREFIX}"
+            f"{str(consultation_id).zfill(cls.CONSULTATION_NUMBER_PADDING)}"
+        )
 
     @staticmethod
     def validate_consultation_date(consultation_date):
@@ -87,11 +85,15 @@ class ConsultationService:
             )
 
     @staticmethod
-    def validate_appointment_not_already_linked(appointment):
-        if (
-            appointment
-            and Consultation.objects.filter(appointment=appointment).exists()
-        ):
+    def validate_appointment_not_already_linked(appointment, current_consultation=None):
+        if not appointment:
+            return
+
+        qs = Consultation.objects.filter(appointment=appointment)
+        if current_consultation:
+            qs = qs.exclude(uuid=current_consultation.uuid)
+
+        if qs.exists():
             raise ValidationError(
                 {
                     "appointment_id": [
@@ -137,16 +139,15 @@ class ConsultationService:
             )
 
     @classmethod
+    @transaction.atomic
     def create_consultation(cls, validated_data):
         appointment = cls.get_appointment(validated_data.get("appointment_id"))
         patient = cls.get_patient(validated_data["patient_id"])
         clinic = cls.get_clinic(validated_data["clinic_id"])
         staff_profile = cls.get_staff_profile(validated_data.get("staff_profile_id"))
 
-        consultation_number = validated_data["consultation_number"].strip().upper()
         consultation_date = validated_data["consultation_date"]
 
-        cls.validate_consultation_number_uniqueness(consultation_number)
         cls.validate_consultation_date(consultation_date)
         cls.validate_staff_clinic_match(staff_profile, clinic)
         cls.validate_appointment_not_already_linked(appointment)
@@ -159,7 +160,7 @@ class ConsultationService:
             patient=patient,
             clinic=clinic,
             staff_profile=staff_profile,
-            consultation_number=consultation_number,
+            consultation_number="TEMP",
             consultation_date=consultation_date,
             consultation_time=validated_data["consultation_time"],
             chief_complaint=validated_data.get("chief_complaint", "").strip() or None,
@@ -186,6 +187,12 @@ class ConsultationService:
             status=validated_data.get("status", Consultation.STATUS_DRAFT),
             is_active=validated_data.get("is_active", True),
         )
+
+        consultation.consultation_number = cls.build_consultation_number(
+            consultation.id
+        )
+        consultation.save(update_fields=["consultation_number"])
+
         return consultation
 
     @staticmethod
@@ -203,7 +210,7 @@ class ConsultationService:
         )
 
     @staticmethod
-    def get_consultation_by_id(consultation_id):
+    def get_consultation_by_id(consultation_uuid):
         try:
             return Consultation.objects.select_related(
                 "appointment",
@@ -211,6 +218,97 @@ class ConsultationService:
                 "clinic",
                 "staff_profile",
                 "staff_profile__user",
-            ).get(id=consultation_id)
+            ).get(uuid=consultation_uuid)
         except Consultation.DoesNotExist:
             raise ValidationError({"consultation_id": ["Consultation not found."]})
+
+    @classmethod
+    def update_consultation(cls, consultation_uuid, validated_data):
+        consultation = cls.get_consultation_by_id(consultation_uuid)
+
+        appointment = (
+            cls.get_appointment(validated_data.get("appointment_id"))
+            if "appointment_id" in validated_data
+            else consultation.appointment
+        )
+        patient = (
+            cls.get_patient(validated_data["patient_id"])
+            if "patient_id" in validated_data
+            else consultation.patient
+        )
+        clinic = (
+            cls.get_clinic(validated_data["clinic_id"])
+            if "clinic_id" in validated_data
+            else consultation.clinic
+        )
+        staff_profile = (
+            cls.get_staff_profile(validated_data.get("staff_profile_id"))
+            if "staff_profile_id" in validated_data
+            else consultation.staff_profile
+        )
+        consultation_date = validated_data.get(
+            "consultation_date", consultation.consultation_date
+        )
+
+        cls.validate_consultation_date(consultation_date)
+        cls.validate_staff_clinic_match(staff_profile, clinic)
+        cls.validate_appointment_not_already_linked(appointment, consultation)
+        cls.validate_appointment_consistency(
+            appointment, patient, clinic, staff_profile
+        )
+
+        consultation.appointment = appointment
+        consultation.patient = patient
+        consultation.clinic = clinic
+        consultation.staff_profile = staff_profile
+        consultation.consultation_date = consultation_date
+        consultation.consultation_time = validated_data.get(
+            "consultation_time", consultation.consultation_time
+        )
+
+        if "chief_complaint" in validated_data:
+            consultation.chief_complaint = (
+                validated_data.get("chief_complaint", "").strip() or None
+            )
+
+        if "history_of_present_illness" in validated_data:
+            consultation.history_of_present_illness = (
+                validated_data.get("history_of_present_illness", "").strip() or None
+            )
+
+        if "medical_history_summary" in validated_data:
+            consultation.medical_history_summary = (
+                validated_data.get("medical_history_summary", "").strip() or None
+            )
+
+        if "dental_history_summary" in validated_data:
+            consultation.dental_history_summary = (
+                validated_data.get("dental_history_summary", "").strip() or None
+            )
+
+        if "examination_summary" in validated_data:
+            consultation.examination_summary = (
+                validated_data.get("examination_summary", "").strip() or None
+            )
+
+        if "provisional_diagnosis" in validated_data:
+            consultation.provisional_diagnosis = (
+                validated_data.get("provisional_diagnosis", "").strip() or None
+            )
+
+        if "final_diagnosis" in validated_data:
+            consultation.final_diagnosis = (
+                validated_data.get("final_diagnosis", "").strip() or None
+            )
+
+        if "notes" in validated_data:
+            consultation.notes = validated_data.get("notes", "").strip() or None
+
+        if "status" in validated_data:
+            consultation.status = validated_data["status"]
+
+        if "is_active" in validated_data:
+            consultation.is_active = validated_data["is_active"]
+
+        consultation.save()
+        return consultation
