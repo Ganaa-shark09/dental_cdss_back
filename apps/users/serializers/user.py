@@ -24,4 +24,11 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_role(self, obj):
-        return obj.role.name if obj.role else None
+        if not obj.role:
+            return None
+
+        return {
+            "uuid": str(obj.role.uuid),
+            "name": obj.role.name,
+            "code": obj.role.code,
+        }

@@ -13,3 +13,16 @@ class UserCreateSerializer(serializers.Serializer):
     role_id = serializers.UUIDField(required=False, allow_null=True)
     is_active = serializers.BooleanField(required=False, default=True)
     is_staff = serializers.BooleanField(required=False, default=False)
+
+
+class UserUpdateSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150, required=False)
+    first_name = serializers.CharField(max_length=150, required=False)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False)
+    phone_number = serializers.CharField(
+        max_length=20, required=False, allow_blank=True
+    )
+    role_id = serializers.UUIDField(required=False, allow_null=True)
+    is_active = serializers.BooleanField(required=False)
+    is_staff = serializers.BooleanField(required=False)
