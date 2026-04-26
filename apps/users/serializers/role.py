@@ -1,12 +1,13 @@
 from rest_framework import serializers
-from apps.users.models import Role
+
+from apps.users.models import Role, User
 
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = (
-            "id",
+            "uuid",
             "name",
             "code",
             "description",

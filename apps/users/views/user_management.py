@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 
 from apps.users.serializers import UserSerializer, UserCreateSerializer
 from apps.users.services import UserService
+from apps.users.serializers import UserUpdateSerializer
+from rest_framework import status
 
 
 class UserListCreateAPIView(APIView):
@@ -17,5 +19,27 @@ class UserListCreateAPIView(APIView):
 
         user = UserService.create_user(serializer.validated_data)
         response_serializer = UserSerializer(user)
-
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+
+class UserDetailAPIView(APIView):
+    def get(self, request, user_uuid, *args, **kwargs):
+        user = UserService.get_user_by_uuid(user_uuid)
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    def put(self, request, user_uuid, *args, **kwargs):
+        serializer = UserUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = UserService.update_user(user_uuid, serializer.validated_data)
+        response_serializer = UserSerializer(user)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, user_uuid, *args, **kwargs):
+        serializer = UserUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+        user = UserService.update_user(user_uuid, serializer.validated_data)
+        response_serializer = UserSerializer(user)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
