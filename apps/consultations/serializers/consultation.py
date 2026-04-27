@@ -36,6 +36,19 @@ class ConsultationSerializer(serializers.ModelSerializer):
             "medical_history_summary",
             "dental_history_summary",
             "examination_summary",
+            # Structured wizard fields
+            "systemic_conditions",
+            "habits",
+            "allergies",
+            "current_medications",
+            "family_history",
+            "hospitalization_history",
+            "past_dental_history",
+            "complaint_duration",
+            "complaint_severity",
+            "visit_number",
+            "opd_number",
+            "reference",
             "provisional_diagnosis",
             "final_diagnosis",
             "notes",
@@ -70,6 +83,20 @@ class ConsultationCreateSerializer(serializers.Serializer):
     dental_history_summary = serializers.CharField(required=False, allow_blank=True)
     examination_summary = serializers.CharField(required=False, allow_blank=True)
 
+    # Structured wizard fields
+    systemic_conditions = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    habits = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    allergies = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    current_medications = serializers.CharField(required=False, allow_blank=True)
+    family_history = serializers.CharField(required=False, allow_blank=True)
+    hospitalization_history = serializers.CharField(required=False, allow_blank=True)
+    past_dental_history = serializers.ListField(child=serializers.CharField(), required=False, default=list)
+    complaint_duration = serializers.CharField(required=False, allow_blank=True)
+    complaint_severity = serializers.CharField(required=False, allow_blank=True)
+    visit_number = serializers.CharField(required=False, allow_blank=True)
+    opd_number = serializers.CharField(required=False, allow_blank=True)
+    reference = serializers.CharField(required=False, allow_blank=True)
+
     provisional_diagnosis = serializers.CharField(required=False, allow_blank=True)
     final_diagnosis = serializers.CharField(required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
@@ -97,6 +124,20 @@ class ConsultationUpdateSerializer(serializers.Serializer):
     dental_history_summary = serializers.CharField(required=False, allow_blank=True)
     examination_summary = serializers.CharField(required=False, allow_blank=True)
 
+    # Structured wizard fields
+    systemic_conditions = serializers.ListField(child=serializers.CharField(), required=False)
+    habits = serializers.ListField(child=serializers.CharField(), required=False)
+    allergies = serializers.ListField(child=serializers.CharField(), required=False)
+    current_medications = serializers.CharField(required=False, allow_blank=True)
+    family_history = serializers.CharField(required=False, allow_blank=True)
+    hospitalization_history = serializers.CharField(required=False, allow_blank=True)
+    past_dental_history = serializers.ListField(child=serializers.CharField(), required=False)
+    complaint_duration = serializers.CharField(required=False, allow_blank=True)
+    complaint_severity = serializers.CharField(required=False, allow_blank=True)
+    visit_number = serializers.CharField(required=False, allow_blank=True)
+    opd_number = serializers.CharField(required=False, allow_blank=True)
+    reference = serializers.CharField(required=False, allow_blank=True)
+
     provisional_diagnosis = serializers.CharField(required=False, allow_blank=True)
     final_diagnosis = serializers.CharField(required=False, allow_blank=True)
     notes = serializers.CharField(required=False, allow_blank=True)
@@ -106,3 +147,4 @@ class ConsultationUpdateSerializer(serializers.Serializer):
         required=False,
     )
     is_active = serializers.BooleanField(required=False)
+

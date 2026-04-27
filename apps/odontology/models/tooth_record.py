@@ -59,6 +59,9 @@ class ToothRecord(BaseModel):
     palpation_tenderness = models.BooleanField(default=False)
     probing_depth_summary = models.CharField(max_length=100, blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+    # Adaptive exam data: all department-specific examination fields from the wizard
+    # Structure mirrors the CLINICAL_SCHEMA fields (coldResponse, percussion, etc.)
+    exam_data = models.JSONField(default=dict, blank=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:

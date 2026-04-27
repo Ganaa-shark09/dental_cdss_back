@@ -2,7 +2,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.cdss.serializers import CdssEngineSerializer, CdssEngineUpdateSerializer
+from apps.cdss.serializers import (
+    CdssEngineSerializer,
+    CdssEngineUpdateSerializer,
+    CdssEnginePrintSerializer,
+)
 from apps.cdss.services import CdssService
 
 
@@ -52,3 +56,10 @@ class CdssEngineDetailAPIView(APIView):
         )
         response_serializer = CdssEngineSerializer(cdss_engine)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class CdssEnginePrintAPIView(APIView):
+    def get(self, request, cdss_engine_uuid, *args, **kwargs):
+        cdss_engine = CdssService.get_cdss_print_data(cdss_engine_uuid)
+        serializer = CdssEnginePrintSerializer(cdss_engine)
+        return Response(serializer.data)
