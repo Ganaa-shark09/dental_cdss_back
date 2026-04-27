@@ -6,6 +6,7 @@ from apps.prescriptions.serializers import (
     PrescriptionSerializer,
     PrescriptionCreateSerializer,
     PrescriptionUpdateSerializer,
+    PrescriptionPrintSerializer,
 )
 from apps.prescriptions.services import PrescriptionService
 
@@ -52,3 +53,10 @@ class PrescriptionDetailAPIView(APIView):
         )
         response_serializer = PrescriptionSerializer(prescription)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+
+class PrescriptionPrintAPIView(APIView):
+    def get(self, request, prescription_uuid, *args, **kwargs):
+        prescription = PrescriptionService.get_prescription_by_uuid(prescription_uuid)
+        serializer = PrescriptionPrintSerializer(prescription)
+        return Response(serializer.data)

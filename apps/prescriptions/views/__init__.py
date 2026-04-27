@@ -1,3 +1,11 @@
-from .prescription import PrescriptionListCreateAPIView, PrescriptionDetailAPIView
+from .prescription import (
+    PrescriptionListCreateAPIView,
+    PrescriptionDetailAPIView,
+    PrescriptionPrintAPIView,
+)
 
-__all__ = ["PrescriptionListCreateAPIView", "PrescriptionDetailAPIView"]
+__all__ = [
+    "PrescriptionListCreateAPIView",
+    "PrescriptionDetailAPIView",
+    "PrescriptionPrintAPIView",
+]

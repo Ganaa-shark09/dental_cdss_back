@@ -53,6 +53,20 @@ class Consultation(BaseModel):
     dental_history_summary = models.TextField(blank=True, null=True)
     examination_summary = models.TextField(blank=True, null=True)
 
+    # Structured wizard fields
+    systemic_conditions = models.JSONField(default=list, blank=True)
+    habits = models.JSONField(default=list, blank=True)
+    allergies = models.JSONField(default=list, blank=True)
+    current_medications = models.TextField(blank=True, null=True)
+    family_history = models.TextField(blank=True, null=True)
+    hospitalization_history = models.TextField(blank=True, null=True)
+    past_dental_history = models.JSONField(default=list, blank=True)
+    complaint_duration = models.CharField(max_length=50, blank=True, null=True)
+    complaint_severity = models.CharField(max_length=20, blank=True, null=True)
+    visit_number = models.CharField(max_length=50, blank=True, null=True)
+    opd_number = models.CharField(max_length=50, blank=True, null=True)
+    reference = models.CharField(max_length=200, blank=True, null=True)
+
     provisional_diagnosis = models.TextField(blank=True, null=True)
     final_diagnosis = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
