@@ -1,5 +1,6 @@
 from rest_framework.exceptions import ValidationError
 
+from apps.audit_logs.services import AuditLogService
 from apps.consultations.models import Consultation
 from apps.odontology.models import DentalChart, ToothRecord
 
@@ -83,7 +84,7 @@ class OdontologyService:
             )
 
     @classmethod
-    def create_chart(cls, validated_data):
+    def create_chart(cls, validated_data, user):
         consultation = cls.get_consultation(validated_data["consultation_id"])
         cls.validate_chart_not_already_exists(consultation)
 
@@ -92,6 +93,16 @@ class OdontologyService:
             notes=validated_data.get("notes", "").strip() or None,
             is_active=validated_data.get("is_active", True),
         )
+
+        AuditLogService.create_log(
+            model_name="DentalChart",
+            record_id=chart.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=f"Consultation {consultation.uuid}",
+            user=user,
+        )
+
         return chart
 
     @staticmethod
@@ -115,8 +126,13 @@ class OdontologyService:
             raise ValidationError({"chart_uuid": ["Dental chart not found."]})
 
     @classmethod
-    def update_chart(cls, chart_uuid, validated_data):
+    def update_chart(cls, chart_uuid, validated_data, user):
         chart = cls.get_chart_by_uuid(chart_uuid)
+
+        old_values = {
+            "notes": chart.notes,
+            "is_active": chart.is_active,
+        }
 
         if "notes" in validated_data:
             chart.notes = validated_data.get("notes", "").strip() or None
@@ -125,6 +141,24 @@ class OdontologyService:
             chart.is_active = validated_data["is_active"]
 
         chart.save()
+
+        new_values = {
+            "notes": chart.notes,
+            "is_active": chart.is_active,
+        }
+
+        for field_name, old_val in old_values.items():
+            new_val = new_values[field_name]
+            if str(old_val) != str(new_val):
+                AuditLogService.create_log(
+                    model_name="DentalChart",
+                    record_id=chart.uuid,
+                    field_name=field_name,
+                    old_value=old_val,
+                    new_value=new_val,
+                    user=user,
+                )
+
         return chart
 
     @staticmethod
@@ -140,7 +174,7 @@ class OdontologyService:
             raise ValidationError({"tooth_record_uuid": ["Tooth record not found."]})
 
     @classmethod
-    def create_tooth_record(cls, chart_uuid, validated_data):
+    def create_tooth_record(cls, chart_uuid, validated_data, user):
         chart = cls.get_chart(chart_uuid)
 
         tooth_number = validated_data["tooth_number"].strip().upper()
@@ -167,6 +201,16 @@ class OdontologyService:
             notes=validated_data.get("notes", "").strip() or None,
             is_active=validated_data.get("is_active", True),
         )
+
+        AuditLogService.create_log(
+            model_name="ToothRecord",
+            record_id=tooth_record.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=f"Tooth {tooth_number} - {tooth_record.condition}",
+            user=user,
+        )
+
         return tooth_record
 
     @staticmethod
@@ -175,8 +219,19 @@ class OdontologyService:
         return chart.tooth_records.filter(is_active=True).order_by("tooth_number")
 
     @classmethod
-    def update_tooth_record(cls, chart_uuid, tooth_record_uuid, validated_data):
+    def update_tooth_record(cls, chart_uuid, tooth_record_uuid, validated_data, user):
         tooth_record = cls.get_tooth_record(chart_uuid, tooth_record_uuid)
+
+        old_values = {
+            "surfaces": str(tooth_record.surfaces),
+            "condition": tooth_record.condition,
+            "mobility_grade": tooth_record.mobility_grade,
+            "percussion_tenderness": tooth_record.percussion_tenderness,
+            "palpation_tenderness": tooth_record.palpation_tenderness,
+            "probing_depth_summary": tooth_record.probing_depth_summary,
+            "notes": tooth_record.notes,
+            "is_active": tooth_record.is_active,
+        }
 
         if "surfaces" in validated_data:
             surfaces = [
@@ -212,4 +267,28 @@ class OdontologyService:
             tooth_record.is_active = validated_data["is_active"]
 
         tooth_record.save()
+
+        new_values = {
+            "surfaces": str(tooth_record.surfaces),
+            "condition": tooth_record.condition,
+            "mobility_grade": tooth_record.mobility_grade,
+            "percussion_tenderness": tooth_record.percussion_tenderness,
+            "palpation_tenderness": tooth_record.palpation_tenderness,
+            "probing_depth_summary": tooth_record.probing_depth_summary,
+            "notes": tooth_record.notes,
+            "is_active": tooth_record.is_active,
+        }
+
+        for field_name, old_val in old_values.items():
+            new_val = new_values[field_name]
+            if str(old_val) != str(new_val):
+                AuditLogService.create_log(
+                    model_name="ToothRecord",
+                    record_id=tooth_record.uuid,
+                    field_name=field_name,
+                    old_value=old_val,
+                    new_value=new_val,
+                    user=user,
+                )
+
         return tooth_record

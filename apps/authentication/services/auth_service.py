@@ -2,6 +2,8 @@ from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from apps.audit_logs.services import AuditLogService
+
 
 class AuthService:
     @staticmethod
@@ -37,4 +39,14 @@ class AuthService:
 
         user.set_password(new_password)
         user.save(update_fields=["password"])
+
+        AuditLogService.create_log(
+            model_name="User",
+            record_id=user.uuid,
+            field_name="password_changed",
+            old_value=None,
+            new_value=None,
+            user=user,
+        )
+
         return user

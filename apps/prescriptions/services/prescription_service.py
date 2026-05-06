@@ -1,5 +1,7 @@
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
+from apps.audit_logs.services import AuditLogService
 from apps.prescriptions.models import Prescription
 from apps.consultations.models import Consultation
 from apps.patients.models import Patient
@@ -44,7 +46,7 @@ class PrescriptionService:
             )
 
     @classmethod
-    def create_prescription(cls, validated_data):
+    def create_prescription(cls, validated_data, user):
         consultation = cls.get_consultation(validated_data["consultation_id"])
         patient = cls.get_patient(validated_data["patient_id"])
 
@@ -65,6 +67,16 @@ class PrescriptionService:
             expiry_date=validated_data.get("expiry_date"),
             is_active=validated_data.get("is_active", True),
         )
+
+        AuditLogService.create_log(
+            model_name="Prescription",
+            record_id=prescription.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=f"{prescription.medication} - Patient {patient.patient_code}",
+            user=user,
+        )
+
         return prescription
 
     @staticmethod
@@ -85,8 +97,22 @@ class PrescriptionService:
             raise ValidationError({"prescription_id": ["Prescription not found."]})
 
     @classmethod
-    def update_prescription(cls, prescription_uuid, validated_data):
+    @transaction.atomic
+    def update_prescription(cls, prescription_uuid, validated_data, user):
         prescription = cls.get_prescription_by_uuid(prescription_uuid)
+
+        # Capture old values before modifications
+        old_values = {
+            "consultation": str(prescription.consultation.uuid),
+            "patient": str(prescription.patient.uuid),
+            "medication": prescription.medication,
+            "dosage": prescription.dosage,
+            "treatment_instructions": prescription.treatment_instructions,
+            "notes": prescription.notes,
+            "date_issued": str(prescription.date_issued),
+            "expiry_date": str(prescription.expiry_date),
+            "is_active": prescription.is_active,
+        }
 
         consultation = (
             cls.get_consultation(validated_data["consultation_id"])
@@ -137,4 +163,30 @@ class PrescriptionService:
             prescription.is_active = validated_data["is_active"]
 
         prescription.save()
+
+        # Log each changed field
+        new_values = {
+            "consultation": str(prescription.consultation.uuid),
+            "patient": str(prescription.patient.uuid),
+            "medication": prescription.medication,
+            "dosage": prescription.dosage,
+            "treatment_instructions": prescription.treatment_instructions,
+            "notes": prescription.notes,
+            "date_issued": str(prescription.date_issued),
+            "expiry_date": str(prescription.expiry_date),
+            "is_active": prescription.is_active,
+        }
+
+        for field_name, old_val in old_values.items():
+            new_val = new_values[field_name]
+            if str(old_val) != str(new_val):
+                AuditLogService.create_log(
+                    model_name="Prescription",
+                    record_id=prescription.uuid,
+                    field_name=field_name,
+                    old_value=old_val,
+                    new_value=new_val,
+                    user=user,
+                )
+
         return prescription

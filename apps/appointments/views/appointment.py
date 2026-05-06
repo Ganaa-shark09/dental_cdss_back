@@ -19,7 +19,7 @@ class AppointmentListCreateAPIView(APIView):
         serializer = AppointmentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        appointment = AppointmentService.create_appointment(serializer.validated_data)
+        appointment = AppointmentService.create_appointment(serializer.validated_data, request.user)
         response_serializer = AppointmentSerializer(appointment)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 

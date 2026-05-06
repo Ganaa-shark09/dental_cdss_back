@@ -17,7 +17,7 @@ class PatientListCreateAPIView(APIView):
         serializer = PatientCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        patient = PatientService.create_patient(serializer.validated_data)
+        patient = PatientService.create_patient(serializer.validated_data, request.user)
         response_serializer = PatientSerializer(patient)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -32,6 +32,6 @@ class PatientDetailAPIView(APIView):
         serializer = PatientUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        patient = PatientService.update_patient(patient_uuid, serializer.validated_data)
+        patient = PatientService.update_patient(patient_uuid, serializer.validated_data, request.user)
         response_serializer = PatientSerializer(patient)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

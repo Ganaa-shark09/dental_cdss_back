@@ -25,7 +25,7 @@ class DocumentListCreateAPIView(APIView):
         serializer = DocumentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        document = DocumentService.create_document(serializer.validated_data)
+        document = DocumentService.create_document(serializer.validated_data, request.user)
         response_serializer = DocumentSerializer(document, context={"request": request})
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -43,7 +43,7 @@ class DocumentDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         document = DocumentService.update_document(
-            document_uuid, serializer.validated_data
+            document_uuid, serializer.validated_data, request.user
         )
         response_serializer = DocumentSerializer(document, context={"request": request})
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -53,7 +53,7 @@ class DocumentDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         document = DocumentService.update_document(
-            document_uuid, serializer.validated_data
+            document_uuid, serializer.validated_data, request.user
         )
         response_serializer = DocumentSerializer(document, context={"request": request})
         return Response(response_serializer.data, status=status.HTTP_200_OK)

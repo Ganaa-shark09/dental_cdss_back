@@ -21,7 +21,7 @@ class TreatmentPlanListCreateAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         treatment_plan = TreatmentPlanService.create_treatment_plan(
-            serializer.validated_data
+            serializer.validated_data, request.user
         )
         response_serializer = TreatmentPlanSerializer(treatment_plan)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -40,7 +40,7 @@ class TreatmentPlanDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         treatment_plan = TreatmentPlanService.update_treatment_plan(
-            treatment_plan_uuid, serializer.validated_data
+            treatment_plan_uuid, serializer.validated_data, request.user
         )
         response_serializer = TreatmentPlanSerializer(treatment_plan)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -50,7 +50,7 @@ class TreatmentPlanDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         treatment_plan = TreatmentPlanService.update_treatment_plan(
-            treatment_plan_uuid, serializer.validated_data
+            treatment_plan_uuid, serializer.validated_data, request.user
         )
         response_serializer = TreatmentPlanSerializer(treatment_plan)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

@@ -22,7 +22,7 @@ class PrescriptionListCreateAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         prescription = PrescriptionService.create_prescription(
-            serializer.validated_data
+            serializer.validated_data, request.user
         )
         response_serializer = PrescriptionSerializer(prescription)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -39,7 +39,7 @@ class PrescriptionDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         prescription = PrescriptionService.update_prescription(
-            prescription_uuid, serializer.validated_data
+            prescription_uuid, serializer.validated_data, request.user
         )
         response_serializer = PrescriptionSerializer(prescription)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -49,7 +49,7 @@ class PrescriptionDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         prescription = PrescriptionService.update_prescription(
-            prescription_uuid, serializer.validated_data
+            prescription_uuid, serializer.validated_data, request.user
         )
         response_serializer = PrescriptionSerializer(prescription)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

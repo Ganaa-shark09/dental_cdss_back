@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
+from apps.audit_logs.services import AuditLogService
 from apps.staff.models import StaffProfile
 
 
@@ -24,14 +25,14 @@ class StaffService:
 
     @classmethod
     @transaction.atomic
-    def create_staff_profile(cls, validated_data):
-        user = validated_data["user"]
+    def create_staff_profile(cls, validated_data, user):
+        user_obj = validated_data["user"]
         clinic = validated_data["clinic"]
 
-        cls.validate_user_not_already_assigned(user)
+        cls.validate_user_not_already_assigned(user_obj)
 
         staff_profile = StaffProfile.objects.create(
-            user=user,
+            user=user_obj,
             clinic=clinic,
             employee_id="TEMP",
             designation=validated_data["designation"].strip(),
@@ -43,6 +44,15 @@ class StaffService:
 
         staff_profile.employee_id = cls.build_employee_id(staff_profile.id)
         staff_profile.save(update_fields=["employee_id"])
+
+        AuditLogService.create_log(
+            model_name="StaffProfile",
+            record_id=staff_profile.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=staff_profile.employee_id,
+            user=user,
+        )
 
         return staff_profile
 
@@ -64,8 +74,19 @@ class StaffService:
             raise ValidationError({"staff_uuid": ["Staff profile not found."]})
 
     @classmethod
-    def update_staff_profile(cls, staff_uuid, validated_data):
+    @transaction.atomic
+    def update_staff_profile(cls, staff_uuid, validated_data, user):
         staff_profile = cls.get_staff_profile_by_uuid(staff_uuid)
+
+        # Capture old values before modifications
+        old_values = {
+            "clinic": str(staff_profile.clinic.uuid),
+            "designation": staff_profile.designation,
+            "specialization": staff_profile.specialization,
+            "license_number": staff_profile.license_number,
+            "years_of_experience": staff_profile.years_of_experience,
+            "is_active": staff_profile.is_active,
+        }
 
         if "clinic" in validated_data:
             staff_profile.clinic = validated_data["clinic"]
@@ -90,4 +111,27 @@ class StaffService:
             staff_profile.is_active = validated_data["is_active"]
 
         staff_profile.save()
+
+        # Log each changed field
+        new_values = {
+            "clinic": str(staff_profile.clinic.uuid),
+            "designation": staff_profile.designation,
+            "specialization": staff_profile.specialization,
+            "license_number": staff_profile.license_number,
+            "years_of_experience": staff_profile.years_of_experience,
+            "is_active": staff_profile.is_active,
+        }
+
+        for field_name, old_val in old_values.items():
+            new_val = new_values[field_name]
+            if str(old_val) != str(new_val):
+                AuditLogService.create_log(
+                    model_name="StaffProfile",
+                    record_id=staff_profile.uuid,
+                    field_name=field_name,
+                    old_value=old_val,
+                    new_value=new_val,
+                    user=user,
+                )
+
         return staff_profile

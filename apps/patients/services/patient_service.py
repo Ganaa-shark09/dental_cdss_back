@@ -3,6 +3,7 @@ from datetime import date
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
+from apps.audit_logs.services import AuditLogService
 from apps.patients.models import Patient
 
 
@@ -42,7 +43,7 @@ class PatientService:
 
     @classmethod
     @transaction.atomic
-    def create_patient(cls, validated_data):
+    def create_patient(cls, validated_data, user):
         email = validated_data.get("email")
         email = email.strip().lower() if email else None
 
@@ -79,6 +80,15 @@ class PatientService:
         patient.patient_code = cls.build_patient_code(patient.id)
         patient.save(update_fields=["patient_code"])
 
+        AuditLogService.create_log(
+            model_name="Patient",
+            record_id=patient.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=patient.patient_code,
+            user=user,
+        )
+
         return patient
 
     @staticmethod
@@ -93,8 +103,30 @@ class PatientService:
             raise ValidationError({"patient_uuid": ["Patient not found."]})
 
     @classmethod
-    def update_patient(cls, patient_uuid, validated_data):
+    @transaction.atomic
+    def update_patient(cls, patient_uuid, validated_data, user):
         patient = cls.get_patient_by_uuid(patient_uuid)
+
+        # Capture old values before modifications
+        old_values = {
+            "first_name": patient.first_name,
+            "last_name": patient.last_name,
+            "gender": patient.gender,
+            "date_of_birth": str(patient.date_of_birth),
+            "phone_number": patient.phone_number,
+            "email": patient.email,
+            "address": patient.address,
+            "city": patient.city,
+            "state": patient.state,
+            "country": patient.country,
+            "postal_code": patient.postal_code,
+            "blood_group": patient.blood_group,
+            "marital_status": patient.marital_status,
+            "occupation": patient.occupation,
+            "emergency_contact_name": patient.emergency_contact_name,
+            "emergency_contact_phone": patient.emergency_contact_phone,
+            "is_active": patient.is_active,
+        }
 
         email = validated_data.get("email")
         email = email.strip().lower() if email else None
@@ -127,4 +159,38 @@ class PatientService:
         patient.is_active = validated_data.get("is_active", patient.is_active)
 
         patient.save()
+
+        # Log each changed field
+        new_values = {
+            "first_name": patient.first_name,
+            "last_name": patient.last_name,
+            "gender": patient.gender,
+            "date_of_birth": str(patient.date_of_birth),
+            "phone_number": patient.phone_number,
+            "email": patient.email,
+            "address": patient.address,
+            "city": patient.city,
+            "state": patient.state,
+            "country": patient.country,
+            "postal_code": patient.postal_code,
+            "blood_group": patient.blood_group,
+            "marital_status": patient.marital_status,
+            "occupation": patient.occupation,
+            "emergency_contact_name": patient.emergency_contact_name,
+            "emergency_contact_phone": patient.emergency_contact_phone,
+            "is_active": patient.is_active,
+        }
+
+        for field_name, old_val in old_values.items():
+            new_val = new_values[field_name]
+            if str(old_val) != str(new_val):
+                AuditLogService.create_log(
+                    model_name="Patient",
+                    record_id=patient.uuid,
+                    field_name=field_name,
+                    old_value=old_val,
+                    new_value=new_val,
+                    user=user,
+                )
+
         return patient

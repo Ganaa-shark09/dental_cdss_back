@@ -21,7 +21,7 @@ class ConsultationListCreateAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         consultation = ConsultationService.create_consultation(
-            serializer.validated_data
+            serializer.validated_data, request.user
         )
         response_serializer = ConsultationSerializer(consultation)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -38,7 +38,7 @@ class ConsultationDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         consultation = ConsultationService.update_consultation(
-            consultation_id, serializer.validated_data
+            consultation_id, serializer.validated_data, request.user
         )
         response_serializer = ConsultationSerializer(consultation)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -48,7 +48,7 @@ class ConsultationDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         consultation = ConsultationService.update_consultation(
-            consultation_id, serializer.validated_data
+            consultation_id, serializer.validated_data, request.user
         )
         response_serializer = ConsultationSerializer(consultation)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

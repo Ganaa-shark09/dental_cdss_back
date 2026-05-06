@@ -1,5 +1,7 @@
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
+from apps.audit_logs.services import AuditLogService
 from apps.treatment_plans.models import TreatmentPlan
 from apps.consultations.models import Consultation
 
@@ -22,7 +24,8 @@ class TreatmentPlanService:
             )
 
     @classmethod
-    def create_treatment_plan(cls, validated_data):
+    @transaction.atomic
+    def create_treatment_plan(cls, validated_data, user):
         consultation = cls.get_consultation(validated_data["consultation_id"])
 
         start_date = validated_data.get("start_date")
@@ -37,6 +40,15 @@ class TreatmentPlanService:
             end_date=end_date,
             status=validated_data.get("status", TreatmentPlan.STATUS_PLANNED),
             is_active=validated_data.get("is_active", True),
+        )
+
+        AuditLogService.create_log(
+            model_name="TreatmentPlan",
+            record_id=treatment_plan.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=f"{treatment_plan.treatment_type} - {treatment_plan.status}",
+            user=user,
         )
 
         return treatment_plan
@@ -61,8 +73,20 @@ class TreatmentPlanService:
             )
 
     @classmethod
-    def update_treatment_plan(cls, treatment_plan_uuid, validated_data):
+    @transaction.atomic
+    def update_treatment_plan(cls, treatment_plan_uuid, validated_data, user):
         treatment_plan = cls.get_treatment_plan_by_uuid(treatment_plan_uuid)
+
+        # Capture old values before modifications
+        old_values = {
+            "consultation": str(treatment_plan.consultation.uuid),
+            "treatment_type": treatment_plan.treatment_type,
+            "treatment_description": treatment_plan.treatment_description,
+            "start_date": str(treatment_plan.start_date),
+            "end_date": str(treatment_plan.end_date),
+            "status": treatment_plan.status,
+            "is_active": treatment_plan.is_active,
+        }
 
         consultation = (
             cls.get_consultation(validated_data["consultation_id"])
@@ -103,4 +127,28 @@ class TreatmentPlanService:
             treatment_plan.is_active = validated_data["is_active"]
 
         treatment_plan.save()
+
+        # Log each changed field
+        new_values = {
+            "consultation": str(treatment_plan.consultation.uuid),
+            "treatment_type": treatment_plan.treatment_type,
+            "treatment_description": treatment_plan.treatment_description,
+            "start_date": str(treatment_plan.start_date),
+            "end_date": str(treatment_plan.end_date),
+            "status": treatment_plan.status,
+            "is_active": treatment_plan.is_active,
+        }
+
+        for field_name, old_val in old_values.items():
+            new_val = new_values[field_name]
+            if str(old_val) != str(new_val):
+                AuditLogService.create_log(
+                    model_name="TreatmentPlan",
+                    record_id=treatment_plan.uuid,
+                    field_name=field_name,
+                    old_value=old_val,
+                    new_value=new_val,
+                    user=user,
+                )
+
         return treatment_plan

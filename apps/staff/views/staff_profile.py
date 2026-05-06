@@ -20,7 +20,7 @@ class StaffProfileListCreateAPIView(APIView):
         serializer = StaffProfileCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        profile = StaffService.create_staff_profile(serializer.validated_data)
+        profile = StaffService.create_staff_profile(serializer.validated_data, request.user)
         response_serializer = StaffProfileSerializer(profile)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -36,7 +36,7 @@ class StaffProfileDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         profile = StaffService.update_staff_profile(
-            staff_uuid, serializer.validated_data
+            staff_uuid, serializer.validated_data, request.user
         )
         response_serializer = StaffProfileSerializer(profile)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -46,7 +46,7 @@ class StaffProfileDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         profile = StaffService.update_staff_profile(
-            staff_uuid, serializer.validated_data
+            staff_uuid, serializer.validated_data, request.user
         )
         response_serializer = StaffProfileSerializer(profile)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
