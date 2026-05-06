@@ -26,7 +26,7 @@ class ToothComplaintListCreateAPIView(APIView):
         serializer = ToothComplaintCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         tc = ToothComplaintService.create_tooth_complaint(
-            consultation_id, serializer.validated_data
+            consultation_id, serializer.validated_data, request.user
         )
         return Response(ToothComplaintSerializer(tc).data, status=status.HTTP_201_CREATED)
 
@@ -43,7 +43,7 @@ class ToothComplaintBulkAPIView(APIView):
         serializer = ToothComplaintBulkCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         results = ToothComplaintService.bulk_create_or_update_tooth_complaints(
-            consultation_id, serializer.validated_data["teeth"]
+            consultation_id, serializer.validated_data["teeth"], request.user
         )
         return Response(
             ToothComplaintSerializer(results, many=True).data,
@@ -66,10 +66,10 @@ class ToothComplaintDetailAPIView(APIView):
         serializer = ToothComplaintUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         tc = ToothComplaintService.update_tooth_complaint(
-            consultation_id, tooth_complaint_id, serializer.validated_data
+            consultation_id, tooth_complaint_id, serializer.validated_data, request.user
         )
         return Response(ToothComplaintSerializer(tc).data)
 
     def delete(self, request, consultation_id, tooth_complaint_id, *args, **kwargs):
-        ToothComplaintService.delete_tooth_complaint(consultation_id, tooth_complaint_id)
+        ToothComplaintService.delete_tooth_complaint(consultation_id, tooth_complaint_id, request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 
+from apps.audit_logs.services import AuditLogService
 from apps.clinics.models import Clinic
 from apps.clinics.serializers import ClinicSerializer, ClinicCreateSerializer
 from apps.clinics.services import ClinicService
@@ -18,7 +19,7 @@ class ClinicListCreateAPIView(APIView):
         serializer = ClinicCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        clinic = ClinicService.create_clinic(serializer.validated_data)
+        clinic = ClinicService.create_clinic(serializer.validated_data, request.user)
         response_serializer = ClinicSerializer(clinic)
 
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -58,6 +59,15 @@ class ClinicDetailAPIView(APIView):
         clinic.postal_code = validated_data.get("postal_code", "")
         clinic.is_active = validated_data.get("is_active", True)
         clinic.save()
+
+        AuditLogService.create_log(
+            model_name="Clinic",
+            record_id=clinic.uuid,
+            field_name="updated",
+            old_value=None,
+            new_value=clinic.code,
+            user=request.user,
+        )
 
         response_serializer = ClinicSerializer(clinic)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -103,6 +113,16 @@ class ClinicDetailAPIView(APIView):
             clinic.is_active = validated_data["is_active"]
 
         clinic.save()
+
+        AuditLogService.create_log(
+            model_name="Clinic",
+            record_id=clinic.uuid,
+            field_name="updated",
+            old_value=None,
+            new_value=clinic.code,
+            user=request.user,
+        )
+
         response_serializer = ClinicSerializer(clinic)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 

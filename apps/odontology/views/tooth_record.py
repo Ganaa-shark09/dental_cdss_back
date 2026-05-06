@@ -23,6 +23,7 @@ class ToothRecordListCreateAPIView(APIView):
         tooth_record = OdontologyService.create_tooth_record(
             chart_uuid=chart_uuid,
             validated_data=serializer.validated_data,
+            user=request.user,
         )
         response_serializer = ToothRecordSerializer(tooth_record)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
@@ -42,6 +43,7 @@ class ToothRecordDetailAPIView(APIView):
             chart_uuid,
             tooth_record_uuid,
             serializer.validated_data,
+            request.user,
         )
         response_serializer = ToothRecordSerializer(tooth_record)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -54,6 +56,7 @@ class ToothRecordDetailAPIView(APIView):
             chart_uuid,
             tooth_record_uuid,
             serializer.validated_data,
+            request.user,
         )
         response_serializer = ToothRecordSerializer(tooth_record)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

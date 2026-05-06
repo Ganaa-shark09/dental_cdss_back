@@ -1,4 +1,7 @@
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
+
+from apps.audit_logs.services import AuditLogService
 from apps.clinics.models import Clinic
 
 
@@ -9,7 +12,8 @@ class ClinicService:
             raise ValidationError({"code": ["A clinic with this code already exists."]})
 
     @classmethod
-    def create_clinic(cls, validated_data):
+    @transaction.atomic
+    def create_clinic(cls, validated_data, user):
         code = validated_data["code"].strip().upper()
         cls.validate_code_uniqueness(code)
 
@@ -25,6 +29,16 @@ class ClinicService:
             postal_code=validated_data.get("postal_code", ""),
             is_active=validated_data.get("is_active", True),
         )
+
+        AuditLogService.create_log(
+            model_name="Clinic",
+            record_id=clinic.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=clinic.code,
+            user=user,
+        )
+
         return clinic
 
     @staticmethod

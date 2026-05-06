@@ -20,7 +20,7 @@ class DentalChartListCreateAPIView(APIView):
         serializer = DentalChartCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        chart = OdontologyService.create_chart(serializer.validated_data)
+        chart = OdontologyService.create_chart(serializer.validated_data, request.user)
         response_serializer = DentalChartSerializer(chart)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -35,7 +35,7 @@ class DentalChartDetailAPIView(APIView):
         serializer = DentalChartUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        chart = OdontologyService.update_chart(chart_uuid, serializer.validated_data)
+        chart = OdontologyService.update_chart(chart_uuid, serializer.validated_data, request.user)
         response_serializer = DentalChartSerializer(chart)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
 
@@ -43,6 +43,6 @@ class DentalChartDetailAPIView(APIView):
         serializer = DentalChartUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
 
-        chart = OdontologyService.update_chart(chart_uuid, serializer.validated_data)
+        chart = OdontologyService.update_chart(chart_uuid, serializer.validated_data, request.user)
         response_serializer = DentalChartSerializer(chart)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

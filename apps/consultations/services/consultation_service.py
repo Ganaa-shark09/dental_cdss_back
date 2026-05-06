@@ -4,6 +4,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from apps.appointments.models import Appointment
+from apps.audit_logs.services import AuditLogService
 from apps.clinics.models import Clinic
 from apps.consultations.models import Consultation
 from apps.patients.models import Patient
@@ -140,7 +141,7 @@ class ConsultationService:
 
     @classmethod
     @transaction.atomic
-    def create_consultation(cls, validated_data):
+    def create_consultation(cls, validated_data, user):
         appointment = cls.get_appointment(validated_data.get("appointment_id"))
         patient = cls.get_patient(validated_data["patient_id"])
         clinic = cls.get_clinic(validated_data["clinic_id"])
@@ -193,6 +194,15 @@ class ConsultationService:
         )
         consultation.save(update_fields=["consultation_number"])
 
+        AuditLogService.create_log(
+            model_name="Consultation",
+            record_id=consultation.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=consultation.consultation_number,
+            user=user,
+        )
+
         return consultation
 
     @staticmethod
@@ -223,8 +233,29 @@ class ConsultationService:
             raise ValidationError({"consultation_id": ["Consultation not found."]})
 
     @classmethod
-    def update_consultation(cls, consultation_uuid, validated_data):
+    @transaction.atomic
+    def update_consultation(cls, consultation_uuid, validated_data, user):
         consultation = cls.get_consultation_by_id(consultation_uuid)
+
+        # Capture old values before any modifications
+        old_values = {
+            "appointment": str(consultation.appointment.uuid) if consultation.appointment else None,
+            "patient": str(consultation.patient.uuid),
+            "clinic": str(consultation.clinic.uuid),
+            "staff_profile": str(consultation.staff_profile.uuid) if consultation.staff_profile else None,
+            "consultation_date": str(consultation.consultation_date),
+            "consultation_time": str(consultation.consultation_time),
+            "chief_complaint": consultation.chief_complaint,
+            "history_of_present_illness": consultation.history_of_present_illness,
+            "medical_history_summary": consultation.medical_history_summary,
+            "dental_history_summary": consultation.dental_history_summary,
+            "examination_summary": consultation.examination_summary,
+            "provisional_diagnosis": consultation.provisional_diagnosis,
+            "final_diagnosis": consultation.final_diagnosis,
+            "notes": consultation.notes,
+            "status": consultation.status,
+            "is_active": consultation.is_active,
+        }
 
         appointment = (
             cls.get_appointment(validated_data.get("appointment_id"))
@@ -311,4 +342,37 @@ class ConsultationService:
             consultation.is_active = validated_data["is_active"]
 
         consultation.save()
+
+        # Log each changed field
+        new_values = {
+            "appointment": str(consultation.appointment.uuid) if consultation.appointment else None,
+            "patient": str(consultation.patient.uuid),
+            "clinic": str(consultation.clinic.uuid),
+            "staff_profile": str(consultation.staff_profile.uuid) if consultation.staff_profile else None,
+            "consultation_date": str(consultation.consultation_date),
+            "consultation_time": str(consultation.consultation_time),
+            "chief_complaint": consultation.chief_complaint,
+            "history_of_present_illness": consultation.history_of_present_illness,
+            "medical_history_summary": consultation.medical_history_summary,
+            "dental_history_summary": consultation.dental_history_summary,
+            "examination_summary": consultation.examination_summary,
+            "provisional_diagnosis": consultation.provisional_diagnosis,
+            "final_diagnosis": consultation.final_diagnosis,
+            "notes": consultation.notes,
+            "status": consultation.status,
+            "is_active": consultation.is_active,
+        }
+
+        for field_name, old_val in old_values.items():
+            new_val = new_values[field_name]
+            if str(old_val) != str(new_val):
+                AuditLogService.create_log(
+                    model_name="Consultation",
+                    record_id=consultation.uuid,
+                    field_name=field_name,
+                    old_value=old_val,
+                    new_value=new_val,
+                    user=user,
+                )
+
         return consultation

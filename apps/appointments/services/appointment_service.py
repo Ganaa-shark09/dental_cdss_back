@@ -4,6 +4,7 @@ from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
 from apps.appointments.models import Appointment
+from apps.audit_logs.services import AuditLogService
 from apps.patients.models import Patient
 from apps.clinics.models import Clinic
 from apps.staff.models import StaffProfile
@@ -85,7 +86,7 @@ class AppointmentService:
 
     @classmethod
     @transaction.atomic
-    def create_appointment(cls, validated_data):
+    def create_appointment(cls, validated_data, user):
         patient = cls.get_patient(validated_data["patient_id"])
         clinic = cls.get_clinic(validated_data["clinic_id"])
         staff_profile = cls.get_staff_profile(validated_data.get("staff_profile_id"))
@@ -112,6 +113,15 @@ class AppointmentService:
 
         appointment.appointment_number = cls.build_appointment_number(appointment.id)
         appointment.save(update_fields=["appointment_number"])
+
+        AuditLogService.create_log(
+            model_name="Appointment",
+            record_id=appointment.uuid,
+            field_name="created",
+            old_value=None,
+            new_value=appointment.appointment_number,
+            user=user,
+        )
 
         return appointment
 

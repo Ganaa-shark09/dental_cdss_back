@@ -25,7 +25,7 @@ class CdssEngineListCreateAPIView(APIView):
             )
 
         consultation = CdssService.get_consultation(consultation_id)
-        cdss_engine = CdssService.analyze_consultation(consultation)
+        cdss_engine = CdssService.analyze_consultation(consultation, request.user)
 
         serializer = CdssEngineSerializer(cdss_engine)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -42,7 +42,7 @@ class CdssEngineDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         cdss_engine = CdssService.update_cdss_engine(
-            cdss_engine_uuid, serializer.validated_data
+            cdss_engine_uuid, serializer.validated_data, request.user
         )
         response_serializer = CdssEngineSerializer(cdss_engine)
         return Response(response_serializer.data, status=status.HTTP_200_OK)
@@ -52,7 +52,7 @@ class CdssEngineDetailAPIView(APIView):
         serializer.is_valid(raise_exception=True)
 
         cdss_engine = CdssService.update_cdss_engine(
-            cdss_engine_uuid, serializer.validated_data
+            cdss_engine_uuid, serializer.validated_data, request.user
         )
         response_serializer = CdssEngineSerializer(cdss_engine)
         return Response(response_serializer.data, status=status.HTTP_200_OK)

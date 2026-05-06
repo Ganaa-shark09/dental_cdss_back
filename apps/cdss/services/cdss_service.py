@@ -4,6 +4,7 @@ from datetime import date
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 
+from apps.audit_logs.services import AuditLogService
 from apps.consultations.models import Consultation
 from apps.cdss.models import CdssEngine, CdssRecommendation
 from apps.cdss.engines.universal_brain import run_universal_brain
@@ -493,7 +494,7 @@ class CdssService:
 
     @classmethod
     @transaction.atomic
-    def analyze_consultation(cls, consultation):
+    def analyze_consultation(cls, consultation, user):
         """
         Runs the CDSS analysis. Uses the structured universal brain engine
         if tooth_complaints exist (wizard data), otherwise falls back to the
@@ -568,12 +569,29 @@ class CdssService:
 
         cls.sync_recommendation_rows(cdss_engine, recommendations)
 
+        AuditLogService.create_log(
+            model_name="CdssEngine",
+            record_id=cdss_engine.uuid,
+            field_name="analyzed" if _created else "re_analyzed",
+            old_value=None,
+            new_value=f"Department: {cdss_engine.department}, Risk: {cdss_engine.risk_score}",
+            user=user,
+        )
+
         return cdss_engine
 
     @classmethod
     @transaction.atomic
-    def update_cdss_engine(cls, cdss_engine_uuid, validated_data):
+    def update_cdss_engine(cls, cdss_engine_uuid, validated_data, user):
         cdss_engine = cls.get_cdss_engine_by_uuid(cdss_engine_uuid)
+
+        old_values = {
+            "department": cdss_engine.department,
+            "risk_score": str(cdss_engine.risk_score),
+            "icd_code": cdss_engine.icd_code,
+            "confidence": cdss_engine.confidence,
+            "is_active": cdss_engine.is_active,
+        }
 
         if "department" in validated_data:
             cdss_engine.department = validated_data["department"]
@@ -596,6 +614,27 @@ class CdssService:
             cdss_engine.is_active = validated_data["is_active"]
 
         cdss_engine.save()
+
+        new_values = {
+            "department": cdss_engine.department,
+            "risk_score": str(cdss_engine.risk_score),
+            "icd_code": cdss_engine.icd_code,
+            "confidence": cdss_engine.confidence,
+            "is_active": cdss_engine.is_active,
+        }
+
+        for field_name, old_val in old_values.items():
+            new_val = new_values[field_name]
+            if str(old_val) != str(new_val):
+                AuditLogService.create_log(
+                    model_name="CdssEngine",
+                    record_id=cdss_engine.uuid,
+                    field_name=field_name,
+                    old_value=old_val,
+                    new_value=new_val,
+                    user=user,
+                )
+
         return cdss_engine
 
     # ────────────────────────────────────────────────────────────────────────
