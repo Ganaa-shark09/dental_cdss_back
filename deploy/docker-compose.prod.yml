@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16
+    container_name: dental_cdss_db
+    restart: unless-stopped
+    env_file:
+      - ../.env.prod
+    volumes:
+      - dental_cdss_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dental_cdss_user -d dental_cdss_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  redis:
+    image: redis:7
+    container_name: dental_cdss_redis
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/django/Dockerfile
+    container_name: dental_cdss_backend
+    restart: unless-stopped
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
+    env_file:
+      - ../.env.prod
+    volumes:
+      - dental_cdss_static:/app/staticfiles
+      - dental_cdss_media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  frontend:
+    build:
+      context: ../../dental_cdss_front
+      dockerfile: Dockerfile
+    container_name: dental_cdss_frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - dental_cdss_static:/static:ro
+      - dental_cdss_media:/media:ro
+    depends_on:
+      - backend
+
+volumes:
+  dental_cdss_postgres_data:
+  dental_cdss_static:
+  dental_cdss_media:
