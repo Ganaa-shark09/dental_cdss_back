@@ -3,6 +3,7 @@ from rest_framework.exceptions import ValidationError
 
 from apps.audit_logs.services import AuditLogService
 from apps.staff.models import StaffProfile
+from apps.users.models import User, Role
 
 
 class StaffService:
@@ -26,16 +27,44 @@ class StaffService:
     @classmethod
     @transaction.atomic
     def create_staff_profile(cls, validated_data, user):
-        user_obj = validated_data["user"]
         clinic = validated_data["clinic"]
+        designation = validated_data["designation"].strip()
 
-        cls.validate_user_not_already_assigned(user_obj)
+        role, _ = Role.objects.get_or_create(
+            code=designation.upper().replace(" ", "_"),
+            defaults={
+                "name": designation.title(),
+                "description": f"{designation.title()} staff role",
+                "is_active": True,
+            },
+        )
+
+        username = validated_data["username"].strip()
+        email = validated_data["email"].strip().lower()
+
+        if User.objects.filter(username__iexact=username).exists():
+            raise ValidationError({"username": ["A user with this username already exists."]})
+
+        if User.objects.filter(email__iexact=email).exists():
+            raise ValidationError({"email": ["A user with this email already exists."]})
+
+        user_obj = User.objects.create_user(
+            username=username,
+            email=email,
+            password=validated_data["password"],
+            first_name=validated_data["first_name"].strip(),
+            last_name=validated_data.get("last_name", "").strip() or "",
+            phone_number=validated_data.get("phone_number", "").strip() or "",
+            role=role,
+            is_active=validated_data.get("is_active", True),
+            is_staff=True,
+        )
 
         staff_profile = StaffProfile.objects.create(
             user=user_obj,
             clinic=clinic,
             employee_id="TEMP",
-            designation=validated_data["designation"].strip(),
+            designation=designation,
             specialization=validated_data.get("specialization", "").strip() or None,
             license_number=validated_data.get("license_number", "").strip() or None,
             years_of_experience=validated_data.get("years_of_experience", 0),

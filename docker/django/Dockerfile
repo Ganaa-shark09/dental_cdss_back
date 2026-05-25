@@ -11,10 +11,13 @@ RUN apt-get update && apt-get install -y \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements/base.txt /app/requirements/base.txt
-RUN pip install --upgrade pip && pip install -r /app/requirements/base.txt
+COPY requirements.txt /app/requirements.txt
+
+RUN pip install --upgrade pip \
+    && pip install -r /app/requirements.txt
 
 COPY . /app
 
 RUN chmod +x /app/docker/django/entrypoint.sh
+
 ENTRYPOINT ["/app/docker/django/entrypoint.sh"]
