@@ -4,6 +4,8 @@ __pycache__/
 *.pyo
 *.pyd
 .env
+.env.docker
+.env.prod
 db.sqlite3
 media/
 staticfiles/
