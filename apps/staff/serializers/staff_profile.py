@@ -33,10 +33,15 @@ class StaffProfileSerializer(serializers.ModelSerializer):
 
 
 class StaffProfileCreateSerializer(serializers.Serializer):
-    user = serializers.SlugRelatedField(
-        slug_field="uuid",
-        queryset=User.objects.filter(is_active=True),
+    username = serializers.CharField(max_length=150)
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    email = serializers.EmailField()
+    phone_number = serializers.CharField(
+        max_length=20, required=False, allow_blank=True
     )
+    password = serializers.CharField(write_only=True, min_length=8)
+
     clinic = serializers.SlugRelatedField(
         slug_field="uuid",
         queryset=Clinic.objects.filter(is_active=True),
